@@ -77,3 +77,12 @@ prop {
     access: ReadWrite
     api_name: "control_illumination"
 }
+
+# sensor class, can have multiple values separated by comma
+prop {
+    prop_name: "persist.vendor.fingerprint.sensor_class"
+    type: String
+    scope: Internal
+    access: ReadWrite
+    api_name: "sensor_class"
+}

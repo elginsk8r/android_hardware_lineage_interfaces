@@ -30,8 +30,17 @@ static const uint16_t kVersion = HARDWARE_MODULE_API_VERSION(2, 1);
 static Fingerprint* sInstance;
 
 Fingerprint::Fingerprint(std::shared_ptr<FingerprintConfig> config)
-    : mConfig(std::move(config)), mDevice(openHal()) {
+    : mConfig(std::move(config)) {
     sInstance = this;  // keep track of the most recent instance
+
+    if (mDevice) {
+        ALOGI("fingerprint HAL already opened");
+    } else {
+        mDevice = openHal();
+        if (!mDevice) {
+            ALOGE("Can't open any fingerprint HAL module");
+        }
+    }
 
     std::string sensorTypeProp = mConfig->get<std::string>("type");
     if (sensorTypeProp == "udfps" || sensorTypeProp == "udfps_optical") {
@@ -72,9 +81,22 @@ fingerprint_device_t* Fingerprint::openHal() {
     int err;
     const hw_module_t* hw_mdl = nullptr;
     ALOGD("Opening fingerprint hal library...");
-    if (0 != (err = hw_get_module(FINGERPRINT_HARDWARE_MODULE_ID, &hw_mdl))) {
-        ALOGE("Can't open fingerprint HW Module, error: %d", err);
-        return nullptr;
+
+    auto sensorClass = mConfig->get<std::string>("sensor_class");
+    auto classEntries = ::android::base::Split(sensorClass, ",");
+    for (const auto& entry : classEntries) {
+        err = hw_get_module_by_class(FINGERPRINT_HARDWARE_MODULE_ID, entry.c_str(), &hw_mdl);
+        if (err == 0) {
+            break;
+        }
+    }
+
+    if (err != 0) {
+        err = hw_get_module(FINGERPRINT_HARDWARE_MODULE_ID, &hw_mdl);
+        if (err != 0) {
+            ALOGE("Can't open fingerprint HW Module, error: %d", err);
+            return nullptr;
+        }
     }
 
     if (hw_mdl == nullptr) {
