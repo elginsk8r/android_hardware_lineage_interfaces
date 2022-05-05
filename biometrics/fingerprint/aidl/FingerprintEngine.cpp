@@ -10,10 +10,22 @@ namespace aidl::android::hardware::biometrics::fingerprint {
 FingerprintEngine::FingerprintEngine(std::shared_ptr<FingerprintConfig> config)
     : mConfig(std::move(config)) {
     ALOGV("FingerprintEngine()");
+    mUdfpsHandlerFactory = getUdfpsHandlerFactory();
+    if (!mUdfpsHandlerFactory) {
+        ALOGE("Can't get UdfpsHandlerFactory");
+    } else {
+        mUdfpsHandler = mUdfpsHandlerFactory->create();
+        if (!mUdfpsHandler) {
+            ALOGE("Can't create UdfpsHandler");
+        }
+    }
 }
 
 FingerprintEngine::~FingerprintEngine() {
     ALOGV("~FingerprintEngine()");
+    if (mUdfpsHandler) {
+        mUdfpsHandlerFactory->destroy(mUdfpsHandler);
+    }
 }
 
 void FingerprintEngine::startSession(std::shared_ptr<ISessionCallback> cb, int userId) {

@@ -24,6 +24,10 @@ FingerprintEngineHw::FingerprintEngineHw(std::shared_ptr<FingerprintConfig> conf
             ALOGE("Can't open any fingerprint HAL module");
         }
     }
+
+    if (mUdfpsHandler) {
+        mUdfpsHandler->init(mDevice);
+    }
 }
 
 FingerprintEngineHw::~FingerprintEngineHw() {
@@ -125,6 +129,21 @@ ndk::ScopedAStatus FingerprintEngineHw::invalidateAuthenticatorIdImpl() {
     uint64_t auth_id = mDevice->get_authenticator_id(mDevice);
     ALOGI("invalidateAuthenticatorId: %lu", auth_id);
     mCb->onAuthenticatorIdInvalidated(auth_id);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus FingerprintEngineHw::onPointerDownImpl(int32_t /* pointerId */, int32_t x,
+                                                          int32_t y, float minor, float major) {
+    if (mUdfpsHandler) {
+        mUdfpsHandler->onFingerDown(x, y, minor, major);
+    }
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus FingerprintEngineHw::onPointerUpImpl(int32_t /* pointerId */) {
+    if (mUdfpsHandler) {
+        mUdfpsHandler->onFingerUp();
+    }
     return ndk::ScopedAStatus::ok();
 }
 
