@@ -149,6 +149,10 @@ ndk::ScopedAStatus FingerprintEngineHw::onPointerUpImpl(int32_t /* pointerId */)
 }
 
 ndk::ScopedAStatus FingerprintEngineHw::cancelImpl() {
+    if (mUdfpsHandler) {
+        mUdfpsHandler->cancel();
+    }
+
     int ret = mDevice->cancel(mDevice);
     if (ret == 0) {
         mCb->onError(Error::CANCELED, 0 /* vendorCode */);
@@ -211,6 +215,9 @@ void FingerprintEngineHw::notify(const fingerprint_msg_t* msg) {
             AcquiredInfo result =
                     VendorAcquiredFilter(msg->data.acquired.acquired_info, &vendorCode);
             ALOGD("onAcquired(%hhd, %d)", result, vendorCode);
+            if (sInstance->mUdfpsHandler) {
+                sInstance->mUdfpsHandler->onAcquired(static_cast<int32_t>(result), vendorCode);
+            }
             // don't process vendor messages further since frameworks try to disable
             // udfps display mode on vendor acquired messages but our sensors send a
             // vendor message during processing...
