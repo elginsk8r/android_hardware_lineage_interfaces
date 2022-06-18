@@ -143,6 +143,10 @@ ndk::ScopedAStatus FingerprintEngineHidl::onPointerUpImpl(int32_t /* pointerId *
 }
 
 ndk::ScopedAStatus FingerprintEngineHidl::cancelImpl() {
+    if (mUdfpsHandler) {
+        mUdfpsHandler->cancel();
+    }
+
     RequestStatus status = mService->cancel();
     if (status != RequestStatus::SYS_OK) {
         int error = RequestStatusToInt(status);
@@ -164,10 +168,13 @@ Return<void> FingerprintEngineHidl::onAcquired(uint64_t deviceId,
                                                FingerprintAcquiredInfo acquiredInfo,
                                                int32_t vendorCode) {
     ALOGD("onAcquired(%hhd, %d)", acquiredInfo, vendorCode);
+    AcquiredInfo info = VendorAcquiredFilter(acquiredInfo);
+    if (mUdfpsHandler) {
+        mUdfpsHandler->onAcquired(static_cast<int32_t>(info), vendorCode);
+    }
     // don't process vendor messages further since frameworks try to disable
     // udfps display mode on vendor acquired messages but our sensors send a
     // vendor message during processing...
-    AcquiredInfo info = VendorAcquiredFilter(acquiredInfo);
     if (info != AcquiredInfo::VENDOR) {
         mCb->onAcquired(info, vendorCode);
     }
