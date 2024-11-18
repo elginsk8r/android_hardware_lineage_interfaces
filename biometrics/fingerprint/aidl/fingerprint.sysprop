@@ -79,6 +79,7 @@ prop {
 }
 
 # sensor class, can have multiple values separated by comma
+# optional modules id per sensor class separated by colon
 prop {
     prop_name: "persist.vendor.fingerprint.sensor_class"
     type: String

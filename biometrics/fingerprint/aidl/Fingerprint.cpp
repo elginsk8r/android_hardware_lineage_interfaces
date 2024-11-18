@@ -78,17 +78,26 @@ Fingerprint::~Fingerprint() {
 }
 
 fingerprint_device_t* Fingerprint::openHal() {
-    int err;
+    int err = -ENOENT;
     const hw_module_t* hw_mdl = nullptr;
     ALOGD("Opening fingerprint hal library...");
 
     auto sensorClass = mConfig->get<std::string>("sensor_class");
     auto classEntries = ::android::base::Split(sensorClass, ",");
     for (const auto& entry : classEntries) {
-        err = hw_get_module_by_class(FINGERPRINT_HARDWARE_MODULE_ID, entry.c_str(), &hw_mdl);
+        auto moduleInfo = ::android::base::Split(entry, ":");
+        if (moduleInfo.size() == 2 && !moduleInfo[0].empty() && !moduleInfo[1].empty()) {
+            err = hw_get_module_by_class(moduleInfo[1].c_str(), moduleInfo[0].c_str(), &hw_mdl);
+        } else if (moduleInfo.size() == 1 && !moduleInfo[0].empty()) {
+            err = hw_get_module_by_class(FINGERPRINT_HARDWARE_MODULE_ID, moduleInfo[0].c_str(), &hw_mdl);
+        } else {
+            ALOGE("Invalid sensor_class entry (expected class or class:id): %s", entry.c_str());
+            continue;
+        }
         if (err == 0) {
             break;
         }
+        hw_mdl = nullptr;
     }
 
     if (err != 0) {
