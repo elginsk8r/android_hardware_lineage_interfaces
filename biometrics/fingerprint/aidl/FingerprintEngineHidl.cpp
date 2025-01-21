@@ -177,9 +177,15 @@ Return<void> FingerprintEngineHidl::onAuthenticated(uint64_t deviceId, uint32_t 
     if (fingerId != 0) {
         HardwareAuthToken authToken;
         translate(token, authToken);
+        if (mUdfpsHandler) {
+            mUdfpsHandler->onAuthenticationSucceeded();
+        }
         mCb->onAuthenticationSucceeded(fingerId, authToken);
         mLockoutTracker.reset(true);
     } else {
+        if (mUdfpsHandler) {
+            mUdfpsHandler->onAuthenticationFailed();
+        }
         mCb->onAuthenticationFailed();
         mLockoutTracker.addFailedAttempt();
         checkSensorLockout();

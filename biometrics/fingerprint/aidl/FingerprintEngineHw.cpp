@@ -235,10 +235,15 @@ void FingerprintEngineHw::notify(const fingerprint_msg_t* msg) {
                 const hw_auth_token_t hat = msg->data.authenticated.hat;
                 HardwareAuthToken authToken;
                 translate(hat, authToken);
-
+                if (sInstance->mUdfpsHandler) {
+                    sInstance->mUdfpsHandler->onAuthenticationSucceeded();
+                }
                 sInstance->mCb->onAuthenticationSucceeded(msg->data.authenticated.finger.fid, authToken);
                 sInstance->clearLockout(true);
             } else {
+                if (sInstance->mUdfpsHandler) {
+                    sInstance->mUdfpsHandler->onAuthenticationFailed();
+                }
                 sInstance->mCb->onAuthenticationFailed();
                 sInstance->checkSensorLockout();
             }
