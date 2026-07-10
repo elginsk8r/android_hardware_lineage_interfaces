@@ -29,7 +29,13 @@ constexpr char SW_VERSION[] = "vendor/version/revision";
 Fingerprint::Fingerprint(std::shared_ptr<FingerprintConfig> config)
     : mConfig(std::move(config)) {
 
-    mEngine = std::make_unique<FingerprintEngine>(config);
+    std::string backendTypeProp = mConfig->get<std::string>("backend");
+    if (backendTypeProp == "hardware") {
+        mEngine = std::make_unique<FingerprintEngineHw>(config);
+    } else {
+        mEngine = std::make_unique<FingerprintEngine>(config);
+    }
+    ALOGI("backendTypeProp: %s", backendTypeProp.c_str());
 
     std::string sensorTypeProp = mConfig->get<std::string>("type");
     if (sensorTypeProp == "udfps" || sensorTypeProp == "udfps_optical") {

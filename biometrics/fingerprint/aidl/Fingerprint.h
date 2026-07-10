@@ -11,6 +11,7 @@
 
 #include "FingerprintConfig.h"
 #include "FingerprintEngine.h"
+#include "FingerprintEngineHw.h"
 #include "Session.h"
 
 using ::aidl::android::hardware::biometrics::fingerprint::FingerprintSensorType;
