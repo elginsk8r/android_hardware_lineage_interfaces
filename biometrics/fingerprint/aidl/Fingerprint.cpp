@@ -40,6 +40,8 @@ Fingerprint::Fingerprint(std::shared_ptr<FingerprintConfig> config)
             mEngine = FingerprintEngineHw::create(mConfig);
         } else if (backend == "hidl") {
             mEngine = FingerprintEngineHidl::create(mConfig);
+        } else if (backend == "egistec") {
+            mEngine = FingerprintEngineRbs::create(mConfig);
         } else {
             if (!backend.empty()) {
                 ALOGE("Unrecognized fingerprint backend: %s", backend.c_str());
