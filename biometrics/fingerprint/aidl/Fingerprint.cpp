@@ -34,6 +34,8 @@ Fingerprint::Fingerprint(std::shared_ptr<FingerprintConfig> config)
         mEngine = std::make_unique<FingerprintEngineHw>(config);
     } else if (backendTypeProp == "hidl") {
         mEngine = std::make_unique<FingerprintEngineHidl>(config);
+    } else if (backendTypeProp == "egistec") {
+        mEngine = std::make_unique<FingerprintEngineRbs>(config);
     } else {
         mEngine = std::make_unique<FingerprintEngine>(config);
     }

@@ -41,6 +41,7 @@ cc_binary {
         "FingerprintEngine.cpp",
         "FingerprintEngineHidl.cpp",
         "FingerprintEngineHw.cpp",
+        "FingerprintEngineRbs.cpp",
         "LockoutTracker.cpp",
         "Session.cpp",
         "service.cpp",
