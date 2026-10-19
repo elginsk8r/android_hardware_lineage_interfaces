@@ -82,6 +82,9 @@ Fingerprint::Fingerprint(std::shared_ptr<FingerprintConfig> config)
                              << sensorTypeProp;
     }
     ALOGI("sensorTypeProp: %s", sensorTypeProp.c_str());
+
+    // Let init scripts know whether a backend could be set up.
+    mConfig->set<bool>("backend_ready", mEngine != nullptr);
 }
 
 std::vector<SensorLocation> Fingerprint::getSensorLocations() {

@@ -88,3 +88,13 @@ prop {
     access: ReadWrite
     api_name: "backend"
 }
+
+# whether a fingerprint sensor backend was set up successfully
+#    set by the HAL at startup, unset until it has tried all backends
+prop {
+    prop_name: "persist.vendor.fingerprint.backend_ready"
+    type: Boolean
+    scope: Internal
+    access: ReadWrite
+    api_name: "backend_ready"
+}
