@@ -173,9 +173,19 @@ FingerprintEngineRbs::FingerprintEngineRbs(std::shared_ptr<FingerprintConfig> co
     }
 }
 
+std::shared_ptr<FingerprintEngine> FingerprintEngineRbs::create(
+        std::shared_ptr<FingerprintConfig> config) {
+    auto engine = std::make_shared<FingerprintEngineRbs>(std::move(config));
+    if (!engine->mInitialized) {
+        ALOGE("Failed to set up fingerprint RBS engine");
+        return nullptr;
+    }
+    return engine;
+}
+
 FingerprintEngineRbs::~FingerprintEngineRbs() {
     sInstance = nullptr;
-    if (CHECK_RBS_FUNCTION(uninitialize)) {
+    if (mInitialized && CHECK_RBS_FUNCTION(uninitialize)) {
         mRbsFlow->uninitialize();
     }
 }
