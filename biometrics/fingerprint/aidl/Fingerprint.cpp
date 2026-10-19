@@ -29,20 +29,38 @@ constexpr char SW_VERSION[] = "vendor/version/revision";
 Fingerprint::Fingerprint(std::shared_ptr<FingerprintConfig> config)
     : mConfig(std::move(config)) {
 
+    // Backends are tried in order of priority until one is set up successfully.
     std::string backendTypeProp = mConfig->get<std::string>("backend");
-    if (backendTypeProp == "hardware") {
-        mEngine = FingerprintEngineHw::create(mConfig);
-    } else if (backendTypeProp == "hidl") {
-        mEngine = FingerprintEngineHidl::create(mConfig);
-    } else if (backendTypeProp == "egistec") {
-        mEngine = FingerprintEngineRbs::create(mConfig);
-    } else {
-        mEngine = FingerprintEngine::create(mConfig);
-    }
     ALOGI("backendTypeProp: %s", backendTypeProp.c_str());
 
-    if (mEngine == nullptr) {
-        ALOGE("Failed to set up fingerprint engine for backend: %s", backendTypeProp.c_str());
+    bool foundBackend = false;
+    for (const auto& entry : ::android::base::Split(backendTypeProp, ",")) {
+        auto backend = ::android::base::Trim(entry);
+        if (backend == "hardware") {
+            mEngine = FingerprintEngineHw::create(mConfig);
+        } else if (backend == "hidl") {
+            mEngine = FingerprintEngineHidl::create(mConfig);
+        } else if (backend == "egistec") {
+            mEngine = FingerprintEngineRbs::create(mConfig);
+        } else {
+            if (!backend.empty()) {
+                ALOGE("Unrecognized fingerprint backend: %s", backend.c_str());
+            }
+            continue;
+        }
+        foundBackend = true;
+
+        if (mEngine != nullptr) {
+            ALOGI("Using fingerprint backend: %s", backend.c_str());
+            break;
+        }
+        ALOGW("Failed to set up fingerprint backend: %s", backend.c_str());
+    }
+
+    if (!foundBackend) {
+        mEngine = FingerprintEngine::create(mConfig);
+    } else if (mEngine == nullptr) {
+        ALOGE("Failed to set up any fingerprint backend from: %s", backendTypeProp.c_str());
     }
 
     std::string sensorTypeProp = mConfig->get<std::string>("type");
