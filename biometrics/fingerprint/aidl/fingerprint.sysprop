@@ -79,7 +79,7 @@ prop {
 }
 
 # type of fingerprint sensor backend (default: hardware)
-#    egistec|hardware|hidl, can have multiple values separated by comma,
+#    aidl|egistec|hardware|hidl, can have multiple values separated by comma,
 #    tried in order of priority until one is set up successfully
 prop {
     prop_name: "persist.vendor.fingerprint.backend"

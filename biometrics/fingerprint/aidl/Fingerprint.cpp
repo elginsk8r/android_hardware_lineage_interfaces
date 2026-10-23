@@ -38,6 +38,8 @@ Fingerprint::Fingerprint(std::shared_ptr<FingerprintConfig> config)
         auto backend = ::android::base::Trim(entry);
         if (backend == "hardware") {
             mEngine = FingerprintEngineHw::create(mConfig);
+        } else if (backend == "aidl") {
+            mEngine = FingerprintEngineAidl::create(mConfig);
         } else if (backend == "hidl") {
             mEngine = FingerprintEngineHidl::create(mConfig);
         } else if (backend == "egistec") {
