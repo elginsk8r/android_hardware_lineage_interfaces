@@ -5,7 +5,10 @@
 
 #pragma once
 
+#include <aidl/android/hardware/biometrics/common/ICancellationSignal.h>
+#include <aidl/android/hardware/biometrics/common/OperationContext.h>
 #include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
+#include <aidl/android/hardware/biometrics/fingerprint/PointerContext.h>
 #include <android/log.h>
 #include <hardware/hardware.h>
 #include <log/log.h>
@@ -41,6 +44,39 @@ class FingerprintEngine {
                                                  int32_t y, float minor, float major) { return ndk::ScopedAStatus::ok(); };
     virtual ndk::ScopedAStatus onPointerUpImpl(int32_t pointerId) { return ndk::ScopedAStatus::ok(); };
     virtual ndk::ScopedAStatus cancelImpl() { return ndk::ScopedAStatus::ok(); };
+
+    // Context-aware / newer ISession entry points. The defaults fall back to the legacy
+    // behaviour, so existing engines (hardware, hidl, ...) are unaffected. Engines that talk to
+    // an AIDL HAL (e.g. the wrapper) override these to forward the context untouched.
+    virtual ndk::ScopedAStatus onUiReadyImpl() { return ndk::ScopedAStatus::ok(); };
+    virtual ndk::ScopedAStatus enrollWithContextImpl(const HardwareAuthToken& hat,
+                                                     const common::OperationContext& /*context*/) {
+        return enrollImpl(hat);
+    };
+    virtual ndk::ScopedAStatus authenticateWithContextImpl(
+            int64_t operationId, const common::OperationContext& /*context*/) {
+        return authenticateImpl(operationId);
+    };
+    virtual ndk::ScopedAStatus detectInteractionWithContextImpl(
+            const common::OperationContext& /*context*/) {
+        return detectInteractionImpl();
+    };
+    virtual ndk::ScopedAStatus onPointerDownWithContextImpl(const PointerContext& context) {
+        return onPointerDownImpl(context.pointerId, context.x, context.y, context.minor,
+                                 context.major);
+    };
+    virtual ndk::ScopedAStatus onPointerUpWithContextImpl(const PointerContext& context) {
+        return onPointerUpImpl(context.pointerId);
+    };
+    virtual ndk::ScopedAStatus onPointerCancelWithContextImpl(const PointerContext& /*context*/) {
+        return ndk::ScopedAStatus::ok();
+    };
+    virtual ndk::ScopedAStatus onContextChangedImpl(const common::OperationContext& /*context*/) {
+        return ndk::ScopedAStatus::ok();
+    };
+    virtual ndk::ScopedAStatus setIgnoreDisplayTouchesImpl(bool /*shouldIgnore*/) {
+        return ndk::ScopedAStatus::ok();
+    };
     virtual ndk::ScopedAStatus resetLockoutImpl(const HardwareAuthToken& hat);
 
   protected:

@@ -52,9 +52,9 @@ ndk::ScopedAStatus Session::authenticate(int64_t operationId,
 }
 
 ndk::ScopedAStatus Session::detectInteraction(std::shared_ptr<ICancellationSignal>* out) {
-    mEngine->detectInteractionImpl();
+    ndk::ScopedAStatus status = mEngine->detectInteractionImpl();
     *out = SharedRefBase::make<CancellationSignal>(this);
-    return ndk::ScopedAStatus::ok();
+    return status;
 }
 
 ndk::ScopedAStatus Session::enumerateEnrollments() {
@@ -87,47 +87,51 @@ ndk::ScopedAStatus Session::onPointerUp(int32_t pointerId) {
 }
 
 ndk::ScopedAStatus Session::onUiReady() {
-    // TODO: stub
-
-    return ndk::ScopedAStatus::ok();
+    return mEngine->onUiReadyImpl();
 }
 
 ndk::ScopedAStatus Session::authenticateWithContext(
-        int64_t operationId, const common::OperationContext& /*context*/,
+        int64_t operationId, const common::OperationContext& context,
         std::shared_ptr<common::ICancellationSignal>* out) {
-    return authenticate(operationId, out);
+    ndk::ScopedAStatus status = mEngine->authenticateWithContextImpl(operationId, context);
+    *out = SharedRefBase::make<CancellationSignal>(this);
+    return status;
 }
 
 ndk::ScopedAStatus Session::enrollWithContext(const keymaster::HardwareAuthToken& hat,
-                                              const common::OperationContext& /*context*/,
+                                              const common::OperationContext& context,
                                               std::shared_ptr<common::ICancellationSignal>* out) {
-    return enroll(hat, out);
+    ndk::ScopedAStatus status = mEngine->enrollWithContextImpl(hat, context);
+    *out = SharedRefBase::make<CancellationSignal>(this);
+    return status;
 }
 
 ndk::ScopedAStatus Session::detectInteractionWithContext(
-        const common::OperationContext& /*context*/,
+        const common::OperationContext& context,
         std::shared_ptr<common::ICancellationSignal>* out) {
-    return detectInteraction(out);
+    ndk::ScopedAStatus status = mEngine->detectInteractionWithContextImpl(context);
+    *out = SharedRefBase::make<CancellationSignal>(this);
+    return status;
 }
 
 ndk::ScopedAStatus Session::onPointerDownWithContext(const PointerContext& context) {
-    return onPointerDown(context.pointerId, context.x, context.y, context.minor, context.major);
+    return mEngine->onPointerDownWithContextImpl(context);
 }
 
 ndk::ScopedAStatus Session::onPointerUpWithContext(const PointerContext& context) {
-    return onPointerUp(context.pointerId);
+    return mEngine->onPointerUpWithContextImpl(context);
 }
 
-ndk::ScopedAStatus Session::onContextChanged(const common::OperationContext& /*context*/) {
-    return ndk::ScopedAStatus::ok();
+ndk::ScopedAStatus Session::onContextChanged(const common::OperationContext& context) {
+    return mEngine->onContextChangedImpl(context);
 }
 
-ndk::ScopedAStatus Session::onPointerCancelWithContext(const PointerContext& /*context*/) {
-    return ndk::ScopedAStatus::ok();
+ndk::ScopedAStatus Session::onPointerCancelWithContext(const PointerContext& context) {
+    return mEngine->onPointerCancelWithContextImpl(context);
 }
 
-ndk::ScopedAStatus Session::setIgnoreDisplayTouches(bool /*shouldIgnore*/) {
-    return ndk::ScopedAStatus::ok();
+ndk::ScopedAStatus Session::setIgnoreDisplayTouches(bool shouldIgnore) {
+    return mEngine->setIgnoreDisplayTouchesImpl(shouldIgnore);
 }
 
 ndk::ScopedAStatus Session::cancel() {
@@ -135,6 +139,9 @@ ndk::ScopedAStatus Session::cancel() {
 }
 
 ndk::ScopedAStatus Session::close() {
+    if (mClosed) {
+        return ndk::ScopedAStatus::ok();
+    }
     mClosed = true;
     mEngine->endSession();
     AIBinder_DeathRecipient_delete(mDeathRecipient);
